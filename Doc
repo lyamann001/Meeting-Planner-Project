@@ -1,0 +1,277 @@
+
+1. Terminalden djangoyu indir.
+    1.(venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django> python -m pip install django
+2. Projenin back bonu'nu oluşturacak, genel ayarlar, url'ler, gelen istekleri karşılayıp pipe line'de middleware by middleware işlem yapacak olan dosyaları içeren "startproject" oluştururlur
+    2.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django> django-admin startproject meeting_planner
+3. meeting_planner klasörünün içerisine yürü.
+    3.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django> cd meeting_planner
+4. test amaçlı projeyi ayağı kaldıralım.
+    4.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py runserver
+5. Projemizin web site'nı oluşturacağız. Burada welcome, about us vb. static sayfaları yöneteceğiz
+    5.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py startapp website
+6. website klasörü altında bulunan "admin.py, apps.py, models.py, test.py" dosyalarını ve migrations klasörünü sil.
+7. meeting_planner => settings.py => INSTALLED_APPS listesine aşağıdaki kodu ekle.
+    'website'
+8. meeting_planner => website => view.py dosyasına aşağıdaki kodları ekleyin.
+
+    from django.http import HttpResponse.
+
+    def welcome(request):
+        return HttpResponse('Welcome to the Meeting Planner')
+
+9. meetings_planner => urls.py dosyasına gelerek. aşağıdaki kodları ekleyin.
+
+    from website.views import welcome
+
+    urlpatterns = [
+        path('welcome.html', welcome),
+    ]
+
+Not: Yukarıdaki işlemi yaptıktan sonra hata alınacaktır. Bu hatayı gidermek için ivedi bir biçimde 10. adımı uygulayın.
+Not: Web projeleri HTTP protoklünün koyduğu kurallara göre çalışır. Yani bir web projesine bir request geldiğinde bu request'i karşılayacak bir URL, ve bu URL'in tetikleneceği bir method ve bu methodun döneceği bir response bulunmaktadır. Web projelerinin mantığı tam olarak budur.
+
+10. YZL3501_Django => meeting_planner klasörüne sağ tıklayarak "Mark Directory as" seçeneğinin altındaki "Sources Root" seçeneği seçelim. Böylelikle projemizde ki dosya dizin mantığı kendini başlangıç olarak meeting_planner dosyasını alacak.
+
+11. Terminale gelerek projemizi ayağı kaldıralım ve welcome sayfasını test eddelim.
+    11.1. Projeye "http://127.0.0.1:8000/welcome.html" request'İ atalım. Başarılı sonuç alacağız. Views altında bulunan welcome fonksiyonunda yazdığımız metin geldi. Çünkü projeye atılan request'İ kaşlıayan bir URL ve bu url'İn tetiklediği bir method var. Aslın biz gelecek bu request için 8. ve 9. adımlarda hazırlık yaptık.
+    11.2. "http://127.0.0.1:8000/welcomezz.html" request geldiğinde 404 yedik. Yani not found. Bunun nedeni bu request'i karşılayacak bir ne url'imiz ve nede methodumuz.
+
+Not: Projemizi ilk kez ayağı kaldırdığımızda şöyle bir warning aldık: "You have 18 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, auth, contenttypes, sessions.
+Run 'python manage.py migrate' to apply them." Aşağıdaki 3 adımda bu warning handle edeceğiz.
+
+12. Veri tabanına gönderilecek ve tablo olarak veri tabanında oluşacak built-in models yapımın listeliyorum
+    12.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py showmigrations
+
+13. Göç (Migration) işişni yapıyoruz.
+    13.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py migrate
+
+14. Bir önceki adımda yapılan göç işlemi yerine varmış mı? Kontrol sağlamak için
+    14.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py dbshell
+
+Not: Bir önceki adım sonucunda terminal ekranım "sqlite>" dönüştü. BU demek oluyor ki artık SQLite içerisindeyim ve T-SQL sorgulama dilini kullanarak veri tabanına sorgu buradan yani terminal ekranından atabilirim.
+
+15. Veri tabanında bulunan tablolarımızı listeleyelim
+    15.1. sqlite> .tables
+
+16. T-SQL sorgulama dilini terminalde kullanarak bir sorgu cümleciği yazarak data çekelim
+    16.1. sqlite> select * from django_migrations;
+
+17. Client'ın etkileşime gireceği, entity'lerin CRUD (Create - Read - Update - Delete) operasyonlarını yürütebilmesi için gerekli arayüzün yönetileceği meetings yapısı oluşturulur.
+    17.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py startapp meetings
+    17.2. app.py ve test.py dosyalarını silelim.
+
+18. meetings => models.py içerisine aşağıdaki kodları ekleyelim
+    from django.db import models
+
+    class Meeting(models.Model):
+        title = models.CharField(max_length=200)
+        date = models.DateField()
+
+19. meeting_planner => settings.py => INSTALLED_APPS listesine aşağıdaki kodu ekle.
+    19.1. 'meetings'
+
+
+20. Bir önceki adımda oluşturulan model içerisinde ki class'ın veritabanında tablo olarak oluşması için veri tabanına göç ettirelim.
+    20.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py makemigrations
+    20.2. meetings => migrations => 0001_initial.py dosyasını inceleyin. Oluşturduğumuz modelin veri tabanında nasıl yada ne özellikler ile olşturulacağının özeti orada yazmaktadır.
+    20.3.(venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py migrate
+
+21. Admin tarafında auth olacak super user'ı yaratalım.
+    21.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py createsuperuser
+
+22. Admin site'ta Meeting entity'sinin CRUD operasyonalrının yürütülmesi için aşağıdaki işlemi yapın.
+    22.1. meetings => admin.py dosyasına aşağıdaki kodları ekleyin.
+
+
+23. meetings => models.py dosyasına aşağıdaki kodları ekleyin
+
+    from datetime import time # bu satırı ekle
+
+    class Meeting(models.Model):
+        title = models.CharField(max_length=200) # eski satırlar
+        date = models.DateField() # eski satırlar
+        start_time = models.TimeField(default=time(9)) #  bu satırı ekledik
+        duration = models.IntegerField(default=1) #  bu satırı ekledik
+
+Not: Yukarıda ki adımda var olan modelimde yani Meeting sınıfında 2 tane yeni özellik ekledik. Bu yeni iki attribute veri tabanında bulunmamaktadır. ORM gereği veri tabanında anormallik olmaması açısından modelin son halini veri tabanına göç ettirmek lazım.
+
+24. Modelde ki değişikliği veri tabanına gönderelim
+    24.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py makemigrations
+    24.2. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py migrate
+
+25. meetings => models.py => Meeting.py sınıfına aşağıdaki fonksiyonu ekleyelim
+
+      def __str__(self):
+        return f'{self.title} at' \
+               f'{self.start_time} on ' \
+               f'{self.date}'
+
+Not: Yukarıda ki adımda Meeting.py sınıfında yani model'de bir değişiklik yaptık. bunun üstüne migrations yaptığımızda bize "No changes detected" dedi. Bunun nedeni modelde biz yeni bir filed eklemedik yada 23çüncü adımda olduğu gibi var olan filed'ta bir değişiklik yapmadık. Bu filed'lar veri tabanunda sütun olarak yaratılmaktaydı. Yaptığımız değişiklik fonksiyon olduğundan django bir değişiklik yakalayamadı.
+
+26. meetings => models.py altında aşağıdaki kod bloğunu ekleyelim.
+
+    class Room(models.Model):
+        name = models.CharField(max_length=50)
+        floor = models.IntegerField()
+        room_number = models.IntegerField()
+
+        def __str__(self):
+            return f'{self.name}: room ' \
+                   f'{self.room_number} on floor ' \
+                   f'{self.floor}'
+
+
+    class Meeting(models.Model):
+        title = models.CharField(max_length=200)
+        date = models.DateField()
+        start_time = models.TimeField(default=time(9))
+        duration = models.IntegerField(default=1)
+        room = models.ForeignKey(Room, on_delete=models.CASCADE)
+
+        def __str__(self):
+            return f'{self.title} at' \
+                   f'{self.start_time} on ' \
+                   f'{self.date}'
+
+27. Yukarıdaki adımda modelimizde yeni bir sınıf ekledik. Bu yeni sınıfın veri tabanımda tablo olarak oluşması için migration yapmalız.
+    27.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py makemigrations
+
+Not: 27.1ci adımı yaptığımzıda bize aşağıdaki warning verildi. Bunun nedeni Meeting tablosunda yeni bir ForeingKey yaratmamızdır. Yani bu eklenen alan ile veri tabanunda var satırların kötü etkileneceğinden bu warning oluştu. Burada ilk önce "2" diyerek quit oluyoruz. Daha sonra var olan migration dosyalarını "__init__" hariç siliyoruz. Ayrıca db.sqlite3 siliniyor. Ana klasöre sağ tıklayarak diskten yeniden yükleyin. Akabinde sıfırdan modelimizi göç ettiriyoruz.
+
+    "It is impossible to add a non-nullable field 'room' to meeting without specifying a default. This is because the database needs something to populate existing rows.
+    Please select a fix:
+     1) Provide a one-off default now (will be set on all existing rows with a null value for this column)
+     2) Quit and manually define a default value in models.py.
+    Select an option: Traceback (most recent call last):
+    "
+
+28. Modeli sıfırdan göç ettiriyoruz.
+    28.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py makemigrations
+    28.2. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py migrate
+    28.3. (venv) PS C:\Users\burak\PycharmProjects\YZL3501_Django\meeting_planner> python manage.py createsuperuser
+
+
+29. meetings => admin.py içerisine aşağıdaki kodu ekleyin.
+    29.1. admin.site.register(Room)
+
+30. website => templates adında bir klasör ekleyelim
+31. website => templates => website adında bir klasör ekleyelim
+32. website => templates => website => welcome.html dosyası ekleyelim
+
+33. website => views.py içerisine açağıdaki kodları ekleyin
+
+    from django.shortcuts import render
+
+    def welcome(request):
+        return render(request,
+                      'website/welcome.html',
+                      {
+                          'message': 'Welcome to the Meeting Planner',
+                          'num_meetings': Meeting.objects.count(),
+                          'meetings': Meeting.objects.all()
+                      })
+
+34. website => welcome.html dosyası içerisinde ki body tagi içerisne yerleştirin.
+    <p>{{ message }}</p>
+    <p>There are currently {{ num_meetings }} meetings sets.</p>
+    <h3>Meetings</h3>
+    <ul>
+        {% for meeting in meetings %}
+            <li>{{ meeting.title }}</li>
+        {% endfor %}
+    </ul>
+
+35. meetings => views.py aşağıdaki kodları ekleyin.
+    from django.shortcuts import render, get_object_or_404
+    from .models import Meeting
+
+    def detail(request, id):
+        meeting = get_object_or_404(Meeting, pk=id)
+        return render(request,
+                      "meetings/detail.html",
+                      {'meeting': meeting})
+
+36. meeting_planner => urls.py dosyasına kodları ekleyin.
+    from meetings.views import detail # satırı ekleyin
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('welcome.html', welcome),
+        path('date', date),
+        path('about', about),
+        path('meetings/<int:id>', detail) # satırı ekleyin
+    ]
+
+37. meetings => templates klasörü ekle.
+38. meetings => templates => meetings klasörü ekle.
+39. meetings => templates => meetings => detail.html ekle.
+
+40. meetings => templates => meetings => detail.html dosyasına aşağıdaki kodları ekle.
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Meeting: {{ meeting.title }}</title>
+    </head>
+    <body>
+    <h1>{{ meeting.title }}</h1>
+    <p>This meeting has been scheduled on {{ meeting.date }}, at {{ meeting.start_time }} in <strong>{{ meeting.room }}</strong></p>
+    </body>
+    </html>
+
+41. meetings => views.py aşağıdaki kodları ekle
+
+    def rooms_list(request):
+        return render(request,
+                      'meetings/rooms_list.html',
+                      {'rooms': Room.objects.all()})
+
+42. meetings => templates => meetings => romms_list.html sayfası yarat.
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+    <h2>Rooms</h2>
+    <ul>
+        {% for room in rooms %}
+            <li>{{ room }}</li>
+        {% endfor %}
+    </ul>
+    </body>
+    </html>
+
+
+43. meeting_planner => urls. dosyasına aşağıdaki kodu ekle.
+    path('rooms', rooms_list, name='rooms')
+
+
+44. meetings => urls.py isimli bir dosya açınız ve aşağıdaki kodları ekleyiniz.
+    from django.urls import path
+    from . import views
+
+    urlpatterns = [
+        path('meetings/<int:id>', views.detail, name='detail'),
+        path('rooms', views.rooms_list, name='rooms')
+    ]
+
+
+45. meeting_planner => urls.py içerisine aşağıdaki kodu ekleyiniz.
+    from django.urls import path, include  # sadece include ekleyeceksin
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('', welcome, name='welcome'),
+        path('date', date),
+        path('about', about),
+        path('meetings/<int:id>', views.detail, name='detail'), # yoruma al
+        path('rooms', views.rooms_list, name='rooms') # yoruma al çünkü artık aşağıdaki path ile çalışacaklar
+        path('meetings/', include('meetings.urls')) # bu satırı ekle
+    ]
+
+Not: Yukarıdaki 43, 44 ve45şinci adımlarda yapılan değişiklikler sonucunda url'lerin son halleri aşağıdaki gibidir.
+Rooms için => http://127.0.0.1:8000/meetings/rooms
+Meeting Detail için => http://127.0.0.1:8000/meetings/meetings/1
